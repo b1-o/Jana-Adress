@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<!-- JANA-UI-VERSION: v3 · 2026-10-17 · новая вёрстка Jana Post -->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store, max-age=0">
+<title>Jana Address — разбор адресных строк</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 21.5s7-6.3 7-11.2a7 7 0 1 0-14 0c0 4.9 7 11.2 7 11.2z' stroke='%23008C00' stroke-width='1.7' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='10' r='2.5' fill='%23008C00'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --green:#008C00; --green-700:#007300; --green-50:#EAF6EA; --green-100:#D4ECD4; --green-200:#B7E0B7;
+    --bg:#F6F6F6; --card:#FFFFFF; --text:#12151A; --muted:#5E5E60; --muted-2:#9A9A9C;
+    --line:#E9E9E9; --line-2:#DCDCDC;
+    --amber-bg:#FFF8E6; --amber-line:#F0CE84; --amber-text:#8A5A00;
+    --red:#C0392B; --red-bg:#FCEDEC; --red-line:#F0BDB8;
+    --radius:16px; --radius-sm:12px; --radius-xs:10px;
+    --shadow:0 1px 2px rgba(18,21,26,.04), 0 10px 30px rgba(18,21,26,.06);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  /* контурные иконки в стиле Jana Post: тонкий штрих, скруглённые концы */
+  .ic{width:20px;height:20px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+    fill:none;flex:0 0 auto;vertical-align:-3px}
+  .ic--sm{width:16px;height:16px;stroke-width:1.8;vertical-align:-2px}
+  .ic--lg{width:42px;height:42px;stroke-width:1.35}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .is-spinning .ic{animation:spin 1.8s linear infinite}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  h1,h2,h3{margin:0;letter-spacing:-.02em}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+  .wrap--wide{max-width:1560px}
+  .wrap--wide .card{margin-top:22px}
+
+  /* ── верхняя служебная полоса ── */
+  .topstrip{background:#F1F1F1;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .topstrip__row{display:flex;align-items:center;justify-content:space-between;gap:16px;height:42px}
+  .topstrip__left{display:flex;align-items:center;gap:10px}
+  .topstrip__right{display:flex;align-items:center;gap:14px}
+  .svc{display:inline-flex;align-items:center;gap:7px}
+  .svc i{width:8px;height:8px;border-radius:50%;background:var(--muted-2);display:inline-block}
+  .svc.is-ok i{background:#16A34A;box-shadow:0 0 0 3px #16A34A22}
+  .svc.is-bad i{background:#DC2626;box-shadow:0 0 0 3px #DC262622}
+  .link-quiet{color:var(--muted);text-decoration:none;border-bottom:1px dashed var(--line-2)}
+  .link-quiet:hover{color:var(--green);border-color:var(--green)}
+
+  /* ── шапка ── */
+  .header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+  .header__row{display:flex;align-items:center;justify-content:space-between;gap:24px;height:72px}
+  .logo{display:flex;align-items:baseline;gap:6px;text-decoration:none;font-size:26px;font-weight:800;letter-spacing:.06em}
+  .logo__mark{color:var(--green)}
+  .logo__post{color:var(--text);font-weight:600;font-size:20px;letter-spacing:.14em}
+  .logo:hover .logo__mark{color:var(--green-700)}
+  .nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .nav__item{position:relative;padding:26px 14px;font-size:14px;color:var(--muted);text-decoration:none;white-space:nowrap}
+  .nav__item:hover{color:var(--text)}
+  .nav__item.is-active{color:var(--green);font-weight:600}
+  .nav__item.is-active::after{content:"";position:absolute;left:14px;right:14px;bottom:16px;height:2px;background:var(--green);border-radius:2px}
+
+  /* ── герой ── */
+  .hero{padding:44px 0 20px;text-align:center}
+  .hero h1{font-size:clamp(30px,4.4vw,52px);font-weight:800}
+  .hero h1 .accent{color:var(--green)}
+  .hero p{max-width:760px;margin:16px auto 0;font-size:17px;color:var(--muted)}
+  .hero__chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+  .chip-static{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:13.5px;color:var(--muted);display:inline-block;text-align:center}
+  .chip-static .ic{color:var(--green);margin-right:6px}
+  .chip-static b{color:var(--text);font-weight:600}
+
+  /* ── карточки ── */
+  section[id],.card{scroll-margin-top:92px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin:22px 0;overflow:hidden}
+  .card__head{display:flex;gap:14px;align-items:flex-start;padding:22px 24px 0}
+  .card__head h2{font-size:21px;font-weight:700}
+  .card__head p{margin:6px 0 0;color:var(--muted);font-size:14.5px}
+  .card__body{padding:20px 24px 24px}
+  .num{flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:var(--green-50);color:var(--green);
+    font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid var(--green-100)}
+
+  /* ── ввод ── */
+  .box{display:grid;grid-template-columns:1.55fr 1fr;gap:18px}
+  @media (max-width:980px){.box{grid-template-columns:1fr}}
+  .field{position:relative}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  textarea{width:100%;min-height:216px;resize:vertical;padding:16px 16px 40px;border:1px solid var(--line-2);
+    border-radius:var(--radius-sm);background:#FCFCFC;color:var(--text);font:15px/1.65 var(--mono);outline:none}
+  textarea:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 3px var(--green-50)}
+  .counter{position:absolute;right:14px;bottom:12px;font-size:12.5px;color:var(--muted-2);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+
+  .drop{border:1.5px dashed var(--line-2);border-radius:var(--radius-sm);background:#FCFCFC;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;
+    padding:22px;min-height:216px;transition:.15s}
+  .drop.is-over{border-color:var(--green);background:var(--green-50)}
+  .drop__icon{width:48px;height:48px;border-radius:14px;background:#fff;border:1px solid var(--line-2);color:var(--green);
+    display:flex;align-items:center;justify-content:center}
+  .drop:hover .drop__icon{border-color:var(--green-200);background:var(--green-50)}
+  .drop b{font-size:14.5px}
+  .drop span{font-size:13px;color:var(--muted)}
+  .drop .hintline{font-size:12.5px;color:var(--muted-2)}
+  .drop.is-busy{opacity:.6;pointer-events:none}
+
+  /* ── кнопки ── */
+  .btn{appearance:none;border:1px solid transparent;border-radius:999px;padding:13px 24px;font-size:15px;font-weight:600;
+    cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:.15s;text-decoration:none}
+  .btn--primary{background:var(--green);color:#fff}
+  .btn--primary:hover:not(:disabled){background:var(--green-700)}
+  .btn--secondary{background:#fff;border-color:var(--line-2);color:var(--text)}
+  .btn--secondary:hover{border-color:var(--green);color:var(--green)}
+  .btn--ghost{background:transparent;border-color:var(--line-2);color:var(--muted);padding:10px 18px;font-size:14px;font-weight:500}
+  .btn--ghost:hover{color:var(--green);border-color:var(--green);background:#fff}
+  .btn--sm{padding:9px 16px;font-size:13.5px}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
+  .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px}
+  .actions .sep{width:1px;height:30px;background:var(--line);margin:0 4px}
+  .kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 6px;color:var(--muted);background:#fff}
+
+  /* ── статус ── */
+  .status{display:none;margin-top:18px;border-radius:var(--radius-sm);padding:14px 16px;font-size:14.5px;border:1px solid var(--line);background:#FCFCFC}
+  .status.ok{background:var(--green-50);border-color:var(--green-100);color:#08590A}
+  .status.warn{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber-text)}
+  .status.err{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+  .status .meta{margin-top:6px;font-size:13px;color:var(--muted)}
+
+  .progress{display:none;margin-top:16px}
+  .progress__bar{height:8px;border-radius:999px;background:#ECECEC;overflow:hidden}
+  .progress__fill{height:100%;width:0;background:var(--green);transition:width .2s}
+  .progress__label{margin-top:8px;font-size:13px;color:var(--muted)}
+
+  /* ── результат ── */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:#FCFCFC;border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px 18px}
+  .stat__value{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .stat__label{font-size:13px;color:var(--muted);margin-top:4px}
+  .stat.is-green .stat__value{color:var(--green)}
+  .stat.is-amber .stat__value{color:var(--amber-text)}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  .legendline{display:flex;flex-wrap:wrap;gap:18px;font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .legendline .lg{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .lg--gaz{background:#EFF9EF;border:1px solid #B7E0B7}
+  .lg--low{background:#FFF8E6;border:1px solid var(--amber-line)}
+  .lg--edit{background:var(--green)}
+  .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{border:1px solid var(--line-2);background:#fff;border-radius:999px;padding:9px 16px;font-size:13.5px;color:var(--muted);cursor:pointer}
+  .pill:hover{border-color:var(--green);color:var(--green)}
+  .pill.is-active{background:var(--green-50);border-color:var(--green-200);color:var(--green);font-weight:600}
+  .pill b{font-weight:700}
+  .search{flex:1 1 220px;min-width:180px;position:relative}
+  .search input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--line-2);border-radius:999px;background:#fff;font-size:14px;outline:none}
+  .search input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-50)}
+  .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted-2)}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .switch input{accent-color:var(--green);width:16px;height:16px}
+
+  .tablewrap{border:1px solid var(--line);border-radius:var(--radius-sm);overflow:auto;max-height:640px;background:#fff}
+  .tablewrap::-webkit-scrollbar{height:10px}
+  .tablewrap::-webkit-scrollbar-thumb{background:#D8D8D8;border-radius:999px}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+  thead th{position:sticky;top:0;z-index:3;background:#F4F4F4;color:var(--muted);font-size:11px;font-weight:700;
+    letter-spacing:.05em;text-transform:uppercase;text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody td{padding:9px 10px;border-bottom:1px solid #F1F1F1;vertical-align:top;background:#fff}
+  tbody tr:hover td{background:#FAFAFA}
+  tbody tr.row-low td{background:var(--amber-bg)}
+  tbody tr.row-low:hover td{background:#FFF2D8}
+  tbody tr.row-edited td:first-child{box-shadow:inset 3px 0 0 var(--green)}
+  td.cell-id{color:var(--muted-2);font:12px var(--mono);white-space:nowrap}
+  td.cell-raw{min-width:230px;max-width:300px;color:var(--text)}
+  .cell-conf,.cell-act{position:sticky;background:#fff}
+  .cell-conf{right:58px;width:118px;min-width:118px;text-align:right;box-shadow:-8px 0 10px -8px rgba(18,21,26,.12)}
+  .cell-act{right:0;width:58px;min-width:58px;max-width:58px;text-align:center}
+  tbody tr:hover .cell-conf,tbody tr:hover .cell-act{background:#FAFAFA}
+  tbody tr.row-low .cell-conf,tbody tr.row-low .cell-act{background:var(--amber-bg)}
+  tbody tr.row-low:hover .cell-conf,tbody tr.row-low:hover .cell-act{background:#FFF2D8}
+  thead th.cell-conf,thead th.cell-act{background:#F4F4F4;z-index:4}
+  .iconbtn{border:1px solid var(--line-2);background:#fff;border-radius:8px;width:34px;height:30px;cursor:pointer;color:var(--muted);font-size:14px;line-height:1}
+  .iconbtn:hover{border-color:var(--green);color:var(--green)}
+  td[contenteditable]:hover{outline:1px dashed var(--line-2);outline-offset:-3px;border-radius:6px;cursor:text}
+  td[contenteditable]:focus{outline:2px solid var(--green);outline-offset:-2px;border-radius:6px;background:#fff}
+  td.from-gazetteer{background:#EFF9EF;color:#0B6B0B}
+  tbody tr:hover td.from-gazetteer{background:#E7F5E7}
+  td.edited{box-shadow:inset 0 -2px 0 var(--green)}
+  td.empty{color:#BFBFBF}
+  .badge{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700}
+  .badge--hi{background:var(--green-50);color:var(--green)}
+  .badge--mid{background:var(--amber-bg);color:var(--amber-text)}
+  .badge--lo{background:var(--red-bg);color:var(--red)}
+  .tag-edited{display:inline-block;margin-left:6px;background:var(--green-50);color:var(--green);border:1px solid var(--green-100);
+    border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:600}
+  .empty-state{padding:52px 20px;text-align:center;color:var(--muted)}
+  .empty-icon{width:78px;height:78px;border-radius:50%;background:var(--green-50);color:var(--green);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+  .tablefoot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:16px}
+  .tablefoot .spacer{flex:1}
+
+  /* ── снизу: справка/формат/о сервисе ── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media (max-width:980px){.grid2{grid-template-columns:1fr}}
+  .steps{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+  .steps li{display:flex;gap:12px;align-items:flex-start}
+  .steps .dot{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--green);color:#fff;font-size:14px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .steps b{display:block;font-size:14.5px}
+  .steps span{font-size:13.5px;color:var(--muted)}
+  .fields{width:100%;border-collapse:collapse;font-size:13.5px}
+  .fields th,.fields td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  .fields th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:#F4F4F4}
+  .fields code{font:12.5px var(--mono);background:#F4F4F4;border-radius:6px;padding:2px 7px}
+  details{border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;background:#FCFCFC;margin-bottom:10px}
+  details summary{cursor:pointer;font-weight:600;font-size:14.5px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"+";display:inline-block;width:18px;color:var(--green);font-weight:700}
+  details[open] summary::before{content:"–"}
+  details p{margin:10px 0 0 18px;color:var(--muted);font-size:14px}
+
+  .evalbox{display:none;margin-top:18px;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden}
+  .evalbox h3{padding:14px 16px;font-size:15px;background:#FCFCFC;border-bottom:1px solid var(--line)}
+  .evalbox table{width:100%;font-size:13.5px}
+  .evalbox th,.evalbox td{padding:9px 14px;text-align:left;border-bottom:1px solid #F1F1F1}
+  .evalbox th{background:#F8F8F8;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .evalbox td.ok{color:var(--green);font-weight:600}
+  .evalbox td.bad{color:var(--red)}
+  .evalbox .legend{padding:12px 16px;font-size:13px;color:var(--muted);background:#FCFCFC;display:flex;gap:18px;flex-wrap:wrap}
+
+  .footer{background:#fff;border-top:1px solid var(--line);margin-top:34px}
+  .footer__row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;padding:34px 0 22px}
+  @media (max-width:900px){.footer__row{grid-template-columns:1fr 1fr}}
+  .footer h4{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .footer ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px}
+  .footer a{text-decoration:none;color:var(--text)}
+  .footer a:hover{color:var(--green)}
+  .footer__about p{margin:12px 0 0;color:var(--muted);font-size:13.5px;max-width:330px}
+  .footer__bottom{border-top:1px solid var(--line);padding:16px 0 26px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    font-size:13px;color:var(--muted-2)}
+
+  /* ── узкие экраны ── */
+  @media (max-width:900px){
+    .wrap{padding:0 16px}
+    .topstrip__row{height:auto;min-height:42px;padding:8px 0;flex-wrap:wrap;gap:8px}
+    .header__row{flex-wrap:wrap;height:auto;padding:12px 0 0;gap:0}
+    .nav{width:100%;overflow-x:auto;flex-wrap:nowrap;gap:2px;scrollbar-width:none}
+    .nav::-webkit-scrollbar{display:none}
+    .nav__item{padding:12px 12px 16px;font-size:13.5px}
+    .nav__item.is-active::after{bottom:8px;left:12px;right:12px}
+    .hero{padding:30px 0 14px}
+    .hero p{font-size:15.5px}
+    .card__head,.card__body{padding-left:16px;padding-right:16px}
+    .stats{grid-template-columns:1fr 1fr}
+    .stat__value{font-size:22px}
+    .grid2{gap:16px}
+    .actions .sep{display:none}
+    .tablefoot .btn{flex:1 1 auto;justify-content:center}
+    .footer__row{grid-template-columns:1fr;gap:18px;padding:24px 0 16px}
+  }
+</style>
+</head>
+<body id="top">
+
+<div class="topstrip">
+  <div class="wrap topstrip__row">
+    <div class="topstrip__left">
+      <svg class="ic ic--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.6 2.7 2.6 15.3 0 18M12 3c-2.6 2.7-2.6 15.3 0 18"/></svg>
+      Русский
+    </div>
+    <div class="topstrip__right">
+      <span class="svc" id="svc"><i></i><span id="svcText">Проверяем сервис…</span></span>
+      <a class="link-quiet" href="/docs" target="_blank" rel="noopener">Документация API</a>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="wrap header__row">
+    <a class="logo" href="#top"><span class="logo__mark">JANA</span><span class="logo__post">ADDRESS</span></a>
+    <nav class="nav">
+      <a class="nav__item is-active" href="#work">Разбор адресов</a>
+      <a class="nav__item" href="#format">Формат данных</a>
+      <a class="nav__item" href="#help">Справка</a>
+      <a class="nav__item" href="#about">О сервисе</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+  <section class="hero">
+    <h1>Превращаем адреса<br>в <span class="accent">чистые данные</span></h1>
+    <p>Вставьте список адресов или загрузите файл — сервис разберёт каждую строку на 14 полей,
+       отметит строки, которые стоит проверить глазами, и отдаст готовый JSON или CSV.</p>
+    <div class="hero__chips">
+      <span class="chip-static">
+        <svg class="ic ic--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.6 3 6 13.4h5.1l-1 7.6 8.3-11h-5.6l.8-7z"/></svg>
+        <b>1000 адресов</b> примерно за секунду</span>
+      <span class="chip-static">
+        <svg class="ic ic--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.6"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><path d="M12 14.6v2.1"/></svg>
+        Работает <b>без интернета</b>, данные не покидают контур</span>
+      <span class="chip-static">
+        <svg class="ic ic--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.4l2.8 2.8L16 9.6"/></svg>
+        Ни одна строка <b>не теряется</b></span>
+    </div>
+  </section>
+
+  <!-- ШАГ 1 -->
+  <section class="card" id="work">
+    <div class="card__head">
+      <div class="num">1</div>
+      <div>
+        <h2>Вставьте адреса или загрузите файл</h2>
+        <p>По одному адресу в строке — можно просто скопировать столбец из Excel. Формат строки любой:
+           «город Алматы, Мкр Аксай 3а, 59, кв 70», «Туран 55/6 подъезд 4» и так далее.</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <div class="box">
+        <div class="field">
+          <label for="input">Адреса</label>
+          <textarea id="input" spellcheck="false" placeholder="город Алматы/Алматы қаласы, Мкр Аксай 3а, 59, кв 70&#10;Туран 55/6 магазин береке 4подьезд 9этаж&#10;Ул .Курильская 9 кв 1"></textarea>
+          <span class="counter" id="counter">строк: 0</span>
+        </div>
+        <div class="drop" id="drop">
+          <div class="drop__icon" id="dropIcon">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.6V4.4"/><path d="M7.8 8.6 12 4.4l4.2 4.2"/><path d="M4.6 19.6h14.8"/></svg>
+          </div>
+          <b>Перетащите файл сюда</b>
+          <span>или <button class="btn btn--secondary btn--sm" id="pick" type="button" style="margin-left:4px">Выбрать файл</button></span>
+          <span class="hintline">Подойдут CSV, TXT и JSONL · первая строка-заголовок распознаётся автоматически</span>
+          <input type="file" id="file" accept=".csv,.txt,.json,.jsonl" hidden>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn--primary" id="run" type="button">Разобрать адреса</button>
+        <button class="btn btn--secondary" id="demo" type="button">Показать пример</button>
+        <button class="btn btn--ghost" id="clear" type="button">Очистить</button>
+        <span class="sep"></span>
+        <span class="hintline" style="font-size:13px;color:var(--muted-2)">Быстрый запуск — <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></span>
+      </div>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <div class="progress" id="progress">
+        <div class="progress__bar"><div class="progress__fill" id="progressFill"></div></div>
+        <div class="progress__label" id="progressLabel"></div>
+      </div>
+    </div>
+  </section>
+
+  </div>
+
+  <!-- ШАГ 2 -->
+  <div class="wrap wrap--wide">
+  <section class="card" id="results" hidden>
+    <div class="card__head">
+      <div class="num">2</div>
+      <div>
+        <h2>Проверьте и поправьте результат</h2>
+        <p>Ячейки можно редактировать прямо в таблице: нажмите на значение и введите правильное.
+           Строки, отмеченные жёлтым, сервис не смог разобрать уверенно — их стоит проверить в первую очередь.</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <div class="stats">
+        <div class="stat"><div class="stat__value" id="statRows">0</div><div class="stat__label">записей разобрано</div></div>
+        <div class="stat is-green"><div class="stat__value" id="statOk">0</div><div class="stat__label">разобраны уверенно</div></div>
+        <div class="stat is-amber"><div class="stat__value" id="statLow">0</div><div class="stat__label">требуют проверки</div></div>
+        <div class="stat"><div class="stat__value" id="statSpeed">—</div><div class="stat__label">скорость разбора</div></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="pills">
+          <button class="pill is-active" data-filter="all" type="button">Все <b id="cntAll">0</b></button>
+          <button class="pill" data-filter="low" type="button">Только неуверенные <b id="cntLow">0</b></button>
+          <button class="pill" data-filter="edited" type="button">Исправленные вручную <b id="cntEdited">0</b></button>
+        </div>
+        <label class="search">
+          <svg class="ic ic--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.6"/><path d="M15.9 15.9 20.4 20.4"/></svg>
+          <input type="search" id="search" placeholder="Поиск по таблице: улица, город, номер дома…">
+        </label>
+        <label class="switch" title="Скрыть редко используемые поля"><input type="checkbox" id="compact"> Компактный вид</label>
+      </div>
+
+      <div class="legendline">
+        <span><i class="lg lg--gaz"></i> зелёная ячейка — значение восстановлено по справочнику</span>
+        <span><i class="lg lg--low"></i> жёлтая строка — уверенность ниже 0.6, проверьте вручную</span>
+        <span><i class="lg lg--edit"></i> зелёная метка слева — строку правили руками</span>
+      </div>
+
+      <div class="tablewrap">
+        <table id="table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg class="ic ic--lg" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.6" width="14" height="15.8" rx="2.6"/><path d="M9.3 4.6v-.9c0-.6.5-1.1 1.1-1.1h3.2c.6 0 1.1.5 1.1 1.1v.9"/><path d="M8.6 11h6.8M8.6 14.6h4.4"/></svg>
+          </div>
+          Пока пусто — вставьте адреса выше и нажмите «Разобрать адреса».
+        </div>
+      </div>
+
+      <div class="tablefoot">
+        <button class="btn btn--primary" id="exportJson" type="button">Скачать JSON</button>
+        <button class="btn btn--secondary" id="exportCsv" type="button">Скачать CSV для Excel</button>
+        <button class="btn btn--secondary" id="copy" type="button">Скопировать результат</button>
+        <span class="spacer"></span>
+        <button class="btn btn--ghost" id="resetEdits" type="button">Сбросить правки</button>
+        <button class="btn btn--ghost" id="pickRef" type="button">Сверить с эталоном</button>
+        <input type="file" id="refFile" accept=".json" hidden>
+      </div>
+
+      <div class="evalbox" id="evalBox"></div>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="wrap">
+
+  <!-- СПРАВКА + ФОРМАТ -->
+  <section class="grid2" id="format">
+    <div class="card" id="help">
+      <div class="card__head">
+        <div class="num">3</div>
+        <div>
+          <h2>Как это работает</h2>
+          <p>Три шага — и от строки остаётся только то, что нужно логистике.</p>
+        </div>
+      </div>
+      <div class="card__body">
+        <ul class="steps">
+          <li><span class="dot">1</span><span><b>Распознаём части адреса</b><span>Область, город, район, жилмассив, улица, дом, квартира, подъезд, этаж и ориентир. Русский и казахский языки, сокращения, дроби и буквы в номере дома.</span></span></li>
+          <li><span class="dot">2</span><span><b>Сверяем со справочником</b><span>Внутри — база из официального классификатора и карт: улицы, жилмассивы, города и границы районов. Поэтому «Аксай 3а» распознаётся как микрорайон, а не как улица.</span></span></li>
+          <li><span class="dot">3</span><span><b>Оцениваем уверенность</b><span>Каждая запись получает оценку от 0 до 1. Ниже 0.6 — строка подсвечивается жёлтым: значит, часть полей не подтвердилась справочником и её лучше проверить вручную.</span></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">
+        <div class="num">4</div>
+        <div>
+          <h2>Формат данных</h2>
+          <p>Ровно те поля, которые требует задание, — в этом же порядке они выгружаются в JSON и CSV.</p>
+        </div>
+      </div>
+      <div class="card__body">
+        <table class="fields" id="fieldsTable">
+          <thead><tr><th>Поле</th><th>Что внутри</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="card" id="about">
+    <div class="card__head">
+      <div class="num">?</div>
+      <div>
+        <h2>Частые вопросы</h2>
+        <p>Коротко о том, что чаще всего спрашивают про разбор адресов.</p>
+      </div>
+    </div>
+    <div class="card__body">
+      <details open><summary>Что делать, если поле пустое?</summary>
+        <p>Пустое поле — это нормально и лучше, чем выдуманное значение: в адресе может не быть квартиры, этажа или района. Оператор может вписать значение вручную прямо в таблице.</p></details>
+      <details><summary>Откуда берутся данные справочника?</summary>
+        <p>Официальный классификатор адресных объектов и открытые картографические данные: улицы, жилмассивы, города, а для Алматы — границы районов. Справочник собирается один раз и лежит внутри сервиса, поэтому в работе интернет не нужен.</p></details>
+      <details><summary>Какой адрес считается «неуверенным»?</summary>
+        <p>Тот, где подтвердилось меньше полей: например, не нашлась улица в справочнике или строка слишком короткая. Такие записи подсвечиваются жёлтым, чтобы оператор проверил их первыми.</p></details>
+      <details><summary>Можно ли загружать большие списки?</summary>
+        <p>Да. Интерфейс сам разбивает список на части по 1000 адресов и показывает прогресс. Лимит задания — 1000 строк за 5 минут, сервис обрабатывает такое количество примерно за секунду.</p></details>
+      <details><summary>Куда попадают данные?</summary>
+        <p>Никуда не отправляются: весь разбор идёт внутри сервиса, справочник лежит в том же контейнере. Внешние сервисы не используются.</p></details>
+    </div>
+  </section>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__row">
+      <div class="footer__about">
+        <a class="logo" href="#top"><span class="logo__mark">JANA</span><span class="logo__post">ADDRESS</span></a>
+        <p>Внутренний сервис разбора адресных строк: превращает произвольный текст в структурированные данные
+           для логистики и маршрутизации.</p>
+      </div>
+      <div>
+        <h4>Сервис</h4>
+        <ul>
+          <li><a href="#work">Разбор адресов</a></li>
+          <li><a href="#results">Результат и выгрузка</a></li>
+          <li><a href="/docs" target="_blank" rel="noopener">Документация API</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Данные</h4>
+        <ul>
+          <li><a href="#format">Формат результата</a></li>
+          <li><a href="#help">Как работает разбор</a></li>
+          <li><a href="#about">Частые вопросы</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Технически</h4>
+        <ul>
+          <li><span id="footGa" style="color:var(--muted)">Справочник: загружается…</span></li>
+          <li><span style="color:var(--muted)">Работает офлайн, запуск через Docker</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>Jana Address · разбор адресных строк · интерфейс v3</span>
+      <span>Данные не покидают контур сервиса</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================ модель данных ============================ */
+const FIELDS = ["id","raw_address","province","city","district","living_area","street_type",
+                "street_name","house","apartment","entrance","floor","landmark","confidence"];
+
+const TITLES = {
+  id:"ID", raw_address:"Исходная строка", province:"Область", city:"Город", district:"Район",
+  living_area:"Жилмассив", street_type:"Тип улицы", street_name:"Улица", house:"Дом",
+  apartment:"Квартира", entrance:"Подъезд", floor:"Этаж", landmark:"Ориентир", confidence:"Уверенность"
+};
+const HINTS = {
+  province:"Область или город республиканского значения — в прямом порядке",
+  city:"Только название города, без слов «город» и «пос.»",
+  district:"Район без слова «район»",
+  living_area:"Жилмассив или микрорайон, если он есть в адресе",
+  street_type:"микрорайон, улица, проспект и так далее",
+  street_name:"Название улицы — так, как указано в адресе",
+  house:"Номер дома: дробь и буква сохраняются (55/6, 12а)",
+  apartment:"Номер квартиры — только цифры",
+  entrance:"Номер подъезда — только цифры",
+  floor:"Этаж — только цифры",
+  landmark:"Ориентир, если он указан в строке",
+  confidence:"Оценка надёжности разбора, от 0 до 1 — для ручной проверки, в официальную метрику не входит"
+};
+const SAMPLE = [
+  "город Алматы/Алматы қаласы, Мкр Аксай 3а, 59, кв 70",
+  "Туран 55/6 магазин береке 4подьезд 9этаж",
+  "66квартал 12дом 69квартира",
+  "Ул .Курильская 9 кв 1",
+  "Нурсити 2 микрорайон 11дом 5 подъезд 239 кв",
+  "Турксибский район, Рыбинский переулок, дом 4",
+  "жуалы 19",
+  "город Актобе/Ақтөбе қаласы, ул. Шернияза, 12а, кв 5"
+];
+
+let rows = [];
+let reference = [];
+let filter = "all";
+let searchText = "";
+let lastSeconds = 0;
+let parsing = false;
+
+const ICONS = {
+  clipboard: '<svg class="ic ic--lg" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.6" width="14" height="15.8" rx="2.6"/><path d="M9.3 4.6v-.9c0-.6.5-1.1 1.1-1.1h3.2c.6 0 1.1.5 1.1 1.1v.9"/><path d="M8.6 11h6.8M8.6 14.6h4.4"/></svg>',
+  search: '<svg class="ic ic--lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.6"/><path d="M15.9 15.9 20.4 20.4"/></svg>',
+  copy: '<svg class="ic ic--sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.6"/><path d="M15 9V6.6A2.6 2.6 0 0 0 12.4 4H6.6A2.6 2.6 0 0 0 4 6.6v5.8A2.6 2.6 0 0 0 6.6 15H9"/></svg>',
+  upload: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.6V4.4"/><path d="M7.8 8.6 12 4.4l4.2 4.2"/><path d="M4.6 19.6h14.8"/></svg>',
+  clock: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.4V12l3.3 2"/></svg>'
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s === null || s === undefined ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+/* ============================ шапка: заголовки таблицы и поля ============================ */
+function buildHead() {
+  const th = FIELDS.map(f => '<th title="' + esc(HINTS[f] || "") + '" class="' +
+    (f === "confidence" ? "cell-conf" : "") + '">' + esc(TITLES[f]) + "</th>").join("");
+  $("table").querySelector("thead").innerHTML = "<tr>" + th + '<th class="cell-act"></th></tr>';
+
+  const tbody = $("fieldsTable").querySelector("tbody");
+  tbody.innerHTML = FIELDS.map(f =>
+    "<tr><td><code>" + esc(f) + "</code></td><td>" + esc(HINTS[f] || "") + "</td></tr>").join("");
+}
+
+/* ============================ здоровье сервиса ============================ */
+fetch("/api/health").then(r => r.json()).then(h => {
+  const ok = h && h.status === "ok";
+  $("svc").className = "svc " + (ok ? "is-ok" : "is-bad");
+  $("svcText").textContent = ok ? "Сервис доступен" : "Сервис недоступен";
+  const s = (h.gazetteer && h.gazetteer.stats) || {};
+  const streets = s.streets || s.street || 0, areas = s.living_areas || s.living_area || 0;
+  if (ok && (streets || areas)) {
+    $("footGa").textContent = "Справочник: " + streets.toLocaleString("ru-RU") + " улиц, " +
+      areas.toLocaleString("ru-RU") + " жилмассивов";
+  } else {
+    $("footGa").textContent = "Справочник: " + ((h.gazetteer && h.gazetteer.summary) || "загружен");
+  }
+}).catch(() => {
+  $("svc").className = "svc is-bad";
+  $("svcText").textContent = "Сервис недоступен";
+  $("footGa").textContent = "Справочник: нет связи с сервисом";
+});
+
+/* ============================ статус и прогресс ============================ */
+function setStatus(kind, html, meta) {
+  const el = $("status");
+  el.className = kind ? kind : "";
+  el.style.display = "block";
+  el.innerHTML = html + (meta ? '<div class="meta">' + meta + "</div>" : "");
+}
+
+function showProgress(done, total) {
+  const el = $("progress");
+  if (!total || total <= 1) { el.style.display = "none"; return; }
+  el.style.display = "block";
+  $("progressFill").style.width = Math.round(100 * done / total) + "%";
+  $("progressLabel").textContent = "Разбираю: " + done + " из " + total + " частей списка…";
+}
+
+/* ============================ разбор ============================ */
+function addressesFromText() {
+  return $("input").value.split("\n").map(s => s.trim()).filter(Boolean);
+}
+
+async function parseBatch(records) {
+  const chunk = 1000;
+  const parts = [];
+  for (let i = 0; i < records.length; i += chunk) parts.push(records.slice(i, i + chunk));
+  const out = [];
+  let seconds = 0;
+  for (let p = 0; p < parts.length; p++) {
+    showProgress(p, parts.length);
+    const res = await fetch("/api/parse/batch?debug=true", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ addresses: parts[p] })
+    });
+    if (!res.ok) throw new Error("сервис ответил ошибкой " + res.status);
+    const data = await res.json();
+    out.push.apply(out, data.results || []);
+    seconds += data.seconds || 0;
+  }
+  showProgress(parts.length, parts.length);
+  return { rows: out, seconds };
+}
+
+/* Аккуратный разбор CSV на стороне браузера: понимает ,  ;  табуляцию и кавычки.
+   Так загружается и тот CSV, который мы сами выгружаем для Excel. */
+function sniffDelimiter(line) {
+  const cands = [";", ",", "\t"];
+  let best = null, bestN = 0;
+  cands.forEach(d => {
+    const n = line.split(d).length - 1;
+    if (n > bestN) { bestN = n; best = d; }
+  });
+  return bestN ? best : null;
+}
+
+function parseCsvRows(text, delim) {
+  const rows = [];
+  let row = [], cell = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else cell += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === delim) { row.push(cell); cell = ""; }
+    else if (ch === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
+    else if (ch !== "\r") cell += ch;
+  }
+  row.push(cell);
+  rows.push(row);
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+
+function pickColumns(table) {
+  const KEY_ADDR = /(raw_address|address|адрес|addr)/i, KEY_ID = /^(id|№|номер|№ п\/п)$/i;
+  const header = table[0].map(x => x.trim());
+  let addrIdx = -1, idIdx = -1, hasHeader = false;
+
+  addrIdx = header.findIndex(h => KEY_ADDR.test(h));
+  if (addrIdx !== -1) hasHeader = true;
+  const maybeId = header.findIndex(h => KEY_ID.test(h));
+  if (maybeId !== -1) { idIdx = maybeId; hasHeader = true; }
+
+  if (!hasHeader && header.length > 1) {
+    // заголовка нет — берём колонку с самым «длинным» текстом (там адреса)
+    const sample = table.slice(0, 25);
+    let bestLen = -1;
+    for (let c = 0; c < header.length; c++) {
+      const avg = sample.reduce((sum, r) => sum + String(r[c] || "").length, 0) / sample.length;
+      if (avg > bestLen) { bestLen = avg; addrIdx = c; }
+    }
+  }
+  if (addrIdx === -1) addrIdx = header.length > 1 ? header.length - 1 : 0;
+  return { addrIdx, idIdx, hasHeader, columns: header.length, name: header[addrIdx] || ("колонка " + (addrIdx + 1)) };
+}
+
+function looksLikeTable(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 25);
+  if (lines.length < 2) return false;
+  const first = lines[0];
+  if (/(raw_address|address|адрес|addr)/i.test(first)) return true;
+  if (/(^|[;,\t])\s*(id|№)\s*([;,\t]|$)/i.test(first)) return true;
+  const d = sniffDelimiter(first);
+  if (!d) return false;
+  const counts = lines.map(l => l.split(d).length);
+  return counts.every(c => c === counts[0]) && counts[0] >= 2;   // одинаковая структура = таблица
+}
+
+function jsonlToRecords(text) {
+  const records = [];
+  text.split(/\r?\n/).forEach((line, i) => {
+    const t = line.trim();
+    if (!t) return;
+    try {
+      const item = JSON.parse(t);
+      const raw = item && (item.raw_address || item.address || item.адрес);
+      if (raw) records.push({ id: String(item.id || ("rec_" + String(i + 1).padStart(5, "0"))), raw_address: String(raw) });
+    } catch (e) { /* не JSON — пропускаем строку */ }
+  });
+  return records;
+}
+
+function linesToRecords(text) {
+  return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+    .map((raw, i) => ({ id: "rec_" + String(i + 1).padStart(5, "0"), raw_address: raw }));
+}
+
+function csvToRecords(text) {
+  const firstLine = (text.split(/\r?\n/, 1)[0] || "");
+  const delim = sniffDelimiter(firstLine);
+  if (!delim) return null;
+  const table = parseCsvRows(text, delim);
+  if (!table.length) return null;
+  const meta = pickColumns(table);
+  const body = meta.hasHeader ? table.slice(1) : table;
+  const records = [];
+  body.forEach((r, i) => {
+    const raw = String(r[meta.addrIdx] || "").trim();
+    if (!raw) return;
+    const id = meta.idIdx !== -1 && String(r[meta.idIdx] || "").trim()
+      ? String(r[meta.idIdx]).trim().replace(/"/g, "")
+      : "rec_" + String(i + 1).padStart(5, "0");
+    records.push({ id, raw_address: raw });
+  });
+  return { records, meta };
+}
+
+async function parseText() {
+  const lines = addressesFromText();
+  if (!lines.length) { setStatus("warn", "Сначала вставьте хотя бы один адрес — или нажмите «Показать пример»."); return; }
+  if (parsing) return;
+  parsing = true;
+  const btn = $("run");
+  btn.disabled = true; btn.textContent = "Разбираю…";
+  try {
+    const t0 = performance.now();
+    const records = lines.map((raw, i) => ({ id: "rec_" + String(i + 1).padStart(5, "0"), raw_address: raw }));
+    const data = await parseBatch(records);
+    const ms = Math.round(performance.now() - t0);
+    rows = data.rows; lastSeconds = data.seconds || (ms / 1000);
+    const low = rows.filter(r => (r.confidence || 0) < 0.6).length;
+    setStatus("ok",
+      "Разобрано <b>" + rows.length + "</b> записей за <b>" + lastSeconds.toFixed(3) + " с</b>. " +
+      (low ? "Нашли <b>" + low + "</b> строк, которые стоит проверить глазами — они уже подсвечены жёлтым."
+           : "Все строки разобрались уверенно, проверять ничего не нужно."),
+      "Скорость: " + Math.round(rows.length / Math.max(lastSeconds, 0.001)) + " строк/с · " +
+      "лимит задания — 1000 строк за 5 минут · полный цикл в браузере: " + ms + " мс");
+    filter = "all"; searchText = ""; $("search").value = "";
+    document.querySelectorAll(".pill").forEach(p => p.classList.toggle("is-active", p.dataset.filter === "all"));
+    $("results").hidden = false;
+    render();
+    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setStatus("err", "Не получилось разобрать адреса: " + esc(err.message) + ". Проверьте, что сервис запущен, и попробуйте ещё раз.");
+  } finally {
+    $("progress").style.display = "none";
+    parsing = false;
+    btn.disabled = false; btn.textContent = "Разобрать адреса";
+  }
+}
+
+async function uploadFile(file) {
+  const drop = $("drop");
+  drop.classList.add("is-busy");
+  $("dropIcon").innerHTML = ICONS.clock;
+  drop.classList.add("is-spinning");
+  $("status").style.display = "none";
+  try {
+    const text = await file.text();
+    const trimmed = text.trim();
+    const isJsonl = /\.jsonl$/i.test(file.name) ||
+      (trimmed.startsWith("{") && trimmed.split(/\r?\n/).filter(l => l.trim()).length > 1);
+    const isJsonFile = /\.json$/i.test(file.name) || (!isJsonl && trimmed.startsWith("["));
+    let data, note = "";
+
+    if (isJsonl) {
+      const records = jsonlToRecords(text);
+      if (!records.length) throw new Error("в JSONL-файле не нашлось ни одной адресной записи");
+      const batch = await parseBatch(records);
+      data = { results: batch.rows, seconds: batch.seconds };
+      note = " Формат определён как JSONL.";
+    } else if (!isJsonFile) {
+      let records = null, format = "";
+      if (looksLikeTable(text)) {
+        const parsed = csvToRecords(text);
+        if (parsed && parsed.records.length) {
+          records = parsed.records;
+          format = "CSV";
+          note = " Колонка с адресом: «" + esc(parsed.meta.name) + "»" +
+                 (parsed.meta.idIdx !== -1 ? ", колонка с ID найдена." : ".");
+        }
+      }
+      if (!records) {
+        records = linesToRecords(text);
+        format = "обычный список строк";
+      }
+      if (!records.length) throw new Error("в файле не нашлось ни одной адресной строки");
+      const batch = await parseBatch(records);
+      data = { results: batch.rows, seconds: batch.seconds };
+      note = " Формат определён как " + format + "." + note;
+    }
+    if (!data) {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/parse/batch/upload?debug=true", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || res.statusText);
+      }
+      data = await res.json();
+    }
+
+    rows = data.results || [];
+    lastSeconds = data.seconds || 0;
+    const low = rows.filter(r => (r.confidence || 0) < 0.6).length;
+    if (!rows.length) throw new Error("в файле не нашлось ни одной адресной строки");
+    setStatus("ok", "Файл <b>" + esc(file.name) + "</b>: разобрано <b>" + rows.length + "</b> записей за <b>" +
+      lastSeconds.toFixed(3) + " с</b>." + (low ? " Неуверенных: <b>" + low + "</b> — проверьте их первыми." : "") + note,
+      "Скорость: " + Math.round(rows.length / Math.max(lastSeconds, 0.001)) + " строк/с");
+    filter = "all"; searchText = ""; $("search").value = "";
+    $("results").hidden = false;
+    render();
+    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setStatus("err", "Не удалось прочитать файл: " + esc(err.message));
+  } finally {
+    drop.classList.remove("is-busy", "is-spinning");
+    $("dropIcon").innerHTML = ICONS.upload;
+  }
+}
+
+/* ============================ отрисовка таблицы ============================ */
+const COMPACT_HIDE = ["district","living_area","street_type","entrance","floor","landmark"];
+let compact = false;
+
+function visibleFields() {
+  return compact ? FIELDS.filter(f => COMPACT_HIDE.indexOf(f) === -1) : FIELDS;
+}
+
+function matchSearch(r) {
+  if (!searchText) return true;
+  const q = searchText.toLowerCase();
+  return FIELDS.some(f => String(r[f] === null || r[f] === undefined ? "" : r[f]).toLowerCase().indexOf(q) !== -1);
+}
+
+function visibleRows() {
+  return rows.filter(r => {
+    if (filter === "low" && !((r.confidence || 0) < 0.6)) return false;
+    if (filter === "edited" && !r._edited) return false;
+    return matchSearch(r);
+  });
+}
+
+function confClass(c) { return c >= 0.8 ? "badge--hi" : (c >= 0.6 ? "badge--mid" : "badge--lo"); }
+
+function render() {
+  const fields = visibleFields();
+  const head = fields.map(f => '<th title="' + esc(HINTS[f] || "") + '" class="' +
+    (f === "confidence" ? "cell-conf" : "") + '">' + esc(TITLES[f]) + "</th>").join("");
+  $("table").querySelector("thead").innerHTML = "<tr>" + head + '<th class="cell-act"></th></tr>';
+
+  const list = visibleRows();
+  const tbody = $("table").querySelector("tbody");
+  tbody.innerHTML = list.map(r => {
+    const low = (r.confidence || 0) < 0.6;
+    const cls = (low ? "row-low" : "") + (r._edited ? " row-edited" : "");
+    const idx = rows.indexOf(r);
+    const tds = fields.map(f => {
+      if (f === "id") return '<td class="cell-id">' + esc(r.id) + "</td>";
+      if (f === "confidence") {
+        const c = r.confidence === null || r.confidence === undefined ? null : Number(r.confidence);
+        return '<td class="cell-conf" style="white-space:nowrap">' +
+          (c === null ? '<span class="empty">—</span>' :
+            '<span class="badge ' + confClass(c) + '">' + c.toFixed(2) + "</span>") +
+          (r._edited ? '<span class="tag-edited">правка</span>' : "") + "</td>";
+      }
+      const val = r[f];
+      const fromGaz = r._sources && r._sources[f] && String(r._sources[f]).indexOf("справочник") === 0;
+      const title = fromGaz ? ' title="восстановлено по справочнику: ' + esc(r._sources[f]) + '"' : "";
+      const empty = val === null || val === undefined || val === "";
+      const cellCls = [f === "raw_address" ? "cell-raw" : "", fromGaz && !empty ? "from-gazetteer" : "",
+                       empty ? "empty" : "", (r._editedFields && r._editedFields[f]) ? "edited" : ""].filter(Boolean).join(" ");
+      return '<td class="' + cellCls + '" contenteditable="true" data-row="' + idx + '" data-field="' + f + '"' + title + ">" +
+        (empty ? "—" : esc(val)) + "</td>";
+    }).join("");
+    return '<tr class="' + cls + '" data-row="' + idx + '">' + tds +
+      '<td class="cell-act"><button class="iconbtn" data-copy="' + idx + '" type="button" title="Скопировать эту строку как JSON">' + ICONS.copy + "</button></td></tr>";
+  }).join("");
+
+  $("emptyState").style.display = list.length ? "none" : "block";
+  $("emptyState").innerHTML = rows.length
+    ? '<div class="empty-icon">' + ICONS.search + "</div>По текущему фильтру ничего не нашлось. Измените фильтр или поиск."
+    : '<div class="empty-icon">' + ICONS.clipboard + "</div>Пока пусто — вставьте адреса выше и нажмите «Разобрать адреса».";
+
+  renderStats();
+}
+
+function renderStats() {
+  const total = rows.length;
+  const low = rows.filter(r => (r.confidence || 0) < 0.6).length;
+  const edited = rows.filter(r => r._edited).length;
+  const ok = total - low;
+  $("statRows").textContent = total;
+  $("statOk").textContent = ok;
+  $("statLow").textContent = low;
+  $("statSpeed").textContent = total && lastSeconds
+    ? Math.round(total / Math.max(lastSeconds, 0.001)) + " строк/с" : "—";
+  $("cntAll").textContent = total;
+  $("cntLow").textContent = low;
+  $("cntEdited").textContent = edited;
+}
+
+/* редактирование ячеек */
+function commitCell(td) {
+  const idx = +td.dataset.row, f = td.dataset.field;
+  const text = td.textContent.trim();
+  const value = (text === "" || text === "—") ? null : text;
+  const rec = rows[idx];
+  if (!rec) return;
+  const before = rec[f] === null || rec[f] === undefined ? "" : String(rec[f]);
+  const after = value === null ? "" : String(value);
+  if (before === after) return;
+  rec[f] = value;
+  rec._edited = true;
+  rec._editedFields = rec._editedFields || {};
+  rec._editedFields[f] = true;
+  td.classList.add("edited");
+  renderStats();
+}
+
+$("table").addEventListener("click", async e => {
+  const btn = e.target.closest("button[data-copy]");
+  if (btn) {
+    const rec = rows[+btn.dataset.copy];
+    if (!rec) return;
+    const clean = {}; FIELDS.forEach(f => clean[f] = rec[f] === undefined ? null : rec[f]);
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(clean, null, 1));
+      setStatus("ok", "Запись <b>" + esc(rec.id) + "</b> скопирована в буфер обмена.");
+    } catch (err) { setStatus("warn", "Браузер не дал доступ к буферу обмена — скачайте файл целиком."); }
+    return;
+  }
+  const td = e.target.closest("td[contenteditable]");
+  if (td && td.textContent.trim() === "—") { td.textContent = ""; td.focus(); }
+});
+
+$("table").addEventListener("blur", e => {
+  const td = e.target.closest ? e.target.closest("td[contenteditable]") : null;
+  if (!td) return;
+  if (td.textContent.trim() === "" || td.textContent.trim() === "—") {
+    td.textContent = "—"; td.classList.add("empty");
+  } else {
+    td.classList.remove("empty");
+  }
+  commitCell(td);
+}, true);
+
+$("table").addEventListener("keydown", e => {
+  const td = e.target.closest ? e.target.closest("td[contenteditable]") : null;
+  if (!td) return;
+  if (e.key === "Enter") { e.preventDefault(); td.blur(); }
+  if (e.key === "Escape") { td.textContent = "—"; td.blur(); render(); }
+});
+
+/* ============================ фильтры и поиск ============================ */
+document.querySelectorAll(".pill").forEach(p => p.addEventListener("click", () => {
+  filter = p.dataset.filter;
+  document.querySelectorAll(".pill").forEach(x => x.classList.toggle("is-active", x === p));
+  render();
+}));
+$("search").addEventListener("input", e => { searchText = e.target.value.trim(); render(); });
+$("compact").addEventListener("change", e => { compact = e.target.checked; render(); });
+
+/* ============================ сверка с эталоном ============================ */
+function normValue(v) {
+  if (v === null || v === undefined || v === "") return null;
+  return String(v).toLowerCase().replace(/ё/g, "е").replace(/[^\wа-я\s]/gi, " ").replace(/\s+/g, " ").trim() || null;
+}
+
+function evaluate() {
+  if (!reference.length) { setStatus("warn", "Сначала выберите файл с эталоном (JSON с ожидаемым разбором)."); return; }
+  if (!rows.length) { setStatus("warn", "Сначала разберите адреса, потом сверяйте с эталоном."); return; }
+  const groups = {
+    "Адрес — 60 %": ["province","city","street_name","house"],
+    "Детали — 25 %": ["apartment","entrance","floor"],
+    "Справочные — 15 %": ["district","living_area"]
+  };
+  const byId = new Map(rows.map(r => [String(r.id), r]));
+  let html = "<h3>Сверка с эталоном: насколько совпало с ожидаемым разбором</h3>" +
+    "<table><thead><tr><th>Поле</th><th>Верно</th><th>Ошибок</th><th>Учтено</th><th>Точность</th></tr></thead><tbody>";
+  let score = 0;
+  for (const group in groups) {
+    let gok = 0, gn = 0;
+    groups[group].forEach(f => {
+      let ok = 0, bad = 0, n = 0;
+      reference.forEach(ref => {
+        const got = byId.get(String(ref.id));
+        if (!got) return;
+        const exp = normValue(ref[f]), val = normValue(got[f]);
+        if (exp === null) return;
+        n++; exp === val ? ok++ : bad++;
+      });
+      gok += ok; gn += n;
+      html += "<tr><td>" + f + '</td><td class="ok">' + ok + '</td><td class="bad">' + bad +
+        "</td><td>" + n + "</td><td>" + (n ? Math.round(100 * ok / n) + "%" : "—") + "</td></tr>";
+    });
+    const weight = +(group.match(/(\d+)\s*%/) || [0, 0])[1] / 100;
+    score += (gn ? gok / gn : 0) * weight;
+    html += "<tr><td><b>" + group + '</b></td><td class="ok"><b>' + gok + '</b></td><td></td><td><b>' + gn +
+      "</b></td><td><b>" + (gn ? Math.round(100 * gok / gn) + "%" : "—") + "</b></td></tr>";
+  }
+  html += '</tbody></table><div class="legend"><span>Итог: <b>' + (score * 100).toFixed(1) +
+    "%</b></span><span>Считаются только те записи и поля, которые есть в эталоне — так же считает жюри.</span></div>";
+  $("evalBox").innerHTML = html;
+  $("evalBox").style.display = "block";
+  $("evalBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/* ============================ выгрузка ============================ */
+function cleanRows() {
+  return rows.map(r => { const o = {}; FIELDS.forEach(f => o[f] = r[f] === undefined ? null : r[f]); return o; });
+}
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: type || "application/json" }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+}
+
+/* ============================ обработчики ============================ */
+$("run").addEventListener("click", parseText);
+$("demo").addEventListener("click", () => {
+  $("input").value = SAMPLE.join("\n");
+  updateCounter();
+  $("input").focus();
+});
+$("clear").addEventListener("click", () => {
+  $("input").value = "";
+  rows = []; reference = [];
+  $("status").style.display = "none";
+  $("progress").style.display = "none";
+  $("evalBox").style.display = "none";
+  $("results").hidden = true;
+  updateCounter(); render();
+});
+$("pick").addEventListener("click", e => { e.stopPropagation(); $("file").click(); });
+$("file").addEventListener("change", e => { if (e.target.files[0]) uploadFile(e.target.files[0]); });
+$("pickRef").addEventListener("click", () => $("refFile").click());
+$("refFile").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    reference = Array.isArray(data) ? data : (data.results || data.addresses || []);
+    setStatus("ok", "Эталон загружен: <b>" + reference.length + "</b> записей из файла " + esc(f.name) + ".");
+    evaluate();
+  } catch (err) { setStatus("err", "Не удалось прочитать эталон: " + esc(err.message)); }
+});
+$("exportJson").addEventListener("click", () => {
+  if (!rows.length) { setStatus("warn", "Пока нечего скачивать — сначала разберите адреса."); return; }
+  download("jana_address_result.json", JSON.stringify(cleanRows(), null, 1));
+  setStatus("ok", "Файл <b>jana_address_result.json</b> сохранён: " + rows.length + " записей.");
+});
+$("exportCsv").addEventListener("click", () => {
+  if (!rows.length) { setStatus("warn", "Пока нечего скачивать — сначала разберите адреса."); return; }
+  const head = FIELDS.join(";");
+  const body = cleanRows().map(r => FIELDS.map(f =>
+    '"' + String(r[f] === null || r[f] === undefined ? "" : r[f]).replace(/"/g, '""') + '"').join(";")).join("\r\n");
+  download("jana_address_result.csv", "\ufeff" + head + "\r\n" + body, "text/csv;charset=utf-8");
+  setStatus("ok", "Файл <b>jana_address_result.csv</b> сохранён: " + rows.length + " записей. Открывается в Excel без настроек.");
+});
+$("copy").addEventListener("click", async () => {
+  if (!rows.length) { setStatus("warn", "Сначала разберите адреса."); return; }
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(cleanRows(), null, 1));
+    setStatus("ok", "Весь результат скопирован в буфер обмена.");
+  } catch (err) { setStatus("warn", "Браузер не дал доступ к буферу обмена — скачайте файл кнопками ниже."); }
+});
+$("resetEdits").addEventListener("click", () => {
+  if (!rows.some(r => r._edited)) { setStatus("warn", "Ручных правок пока нет."); return; }
+  rows.forEach(r => { delete r._edited; delete r._editedFields; });
+  render();
+  setStatus("ok", "Все ручные правки сброшены — показан исходный результат разбора.");
+});
+
+/* drag & drop */
+const drop = $("drop");
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("is-over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("is-over"); }));
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) uploadFile(f); });
+drop.addEventListener("click", e => { if (e.target.tagName !== "BUTTON") $("file").click(); });
+
+/* счётчик строк + горячая клавиша */
+function updateCounter() {
+  const n = addressesFromText().length;
+  $("counter").textContent = "строк: " + n;
+  $("run").disabled = n === 0 || parsing;
+}
+$("input").addEventListener("input", updateCounter);
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); parseText(); }
+});
+
+/* старт */
+buildHead();
+updateCounter();
+render();
+</script>
+</body>
+</html>

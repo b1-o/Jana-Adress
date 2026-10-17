@@ -1,0 +1,11 @@
+# --- что нужно, чтобы просто ЗАПУСТИТЬ проект ---
+# Версии «не ниже»: на Python 3.13/3.14 старые точные версии pydantic
+# не имеют готовых пакетов и начинают собираться из исходников.
+fastapi>=0.115.6
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.5
+python-multipart>=0.0.20
+
+# --- тесты (python -m pytest tests -q) ---
+pytest>=8.3
+httpx>=0.27          # нужен FastAPI TestClient в tests/test_api.py

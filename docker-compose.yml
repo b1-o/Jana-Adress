@@ -1,0 +1,15 @@
+services:
+  jana-address:
+    build: .
+    image: jana-address:latest
+    container_name: jana-address
+    ports:
+      - "8000:8000"          # интерфейс и API: http://localhost:8000
+    environment:
+      - GAZETTEER_PATH=data/gazetteer.sqlite
+    restart: unless-stopped
+    # Справочник и весь код внутри образа: сеть на этапе разбора не нужна.
+    # Проверка после старта:
+    #   curl -s localhost:8000/api/health | python -m json.tool
+    #   curl -s -X POST localhost:8000/api/parse -H 'Content-Type: application/json' \
+    #        -d '{"raw_address":"город Алматы/Алматы қаласы, Мкр Аксай 3а, 59, кв 70"}'

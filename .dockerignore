@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.git/
+.gitignore
+data/osm/_raw/
+data/osm_fetch.log
+*.log
+notebooks/
+*.md
+!README.md

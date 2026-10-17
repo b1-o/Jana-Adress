@@ -1,0 +1,7 @@
+{
+  "нурсити": {"type": "living_area", "canonical": "Нурсити"},
+  "нурсити 2": {"type": "living_area", "canonical": "Нурсити 2"},
+  "берееке": {"type": "landmark", "canonical": "магазин Березке"}, 
+  "березке": {"type": "landmark", "canonical": "магазин Березке"},
+  "жк нурсити": {"type": "living_area", "canonical": "Нурсити"}
+}
