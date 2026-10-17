@@ -46,12 +46,13 @@ python3 tests/test_parser.py      # тесты парсера (15 кейсов �
 | `docker compose up` — одной командой | ✅ (собирается и запускается) |
 | Метрика уровня жюри (`scripts/eval.py`) + свой тестовый набор | ✅ **100 %** на 30 строках |
 | Восстановление района по справочнику (полигоны районов + point-in-polygon) | ✅ Алматы — 8 районов |
-| Самопроверка решения (`scripts/selfcheck.py`, `make check`) | ✅ 15 адресов, 19 тестов, метрика |
+| Самопроверка решения (`scripts/selfcheck.py`, `make check`) | ✅ 14 адресов, 168 тестов, метрика 100 % |
 | Три языка: русский, казахский, английский (+ латиница) | ✅ разбор одинаковый на всех трёх |
 | Расширение OSM на остальные города | ✅ 33 095 улиц по 28 городам (было 12 344 по 5) |
 
-Скорость: **~900 адресов в секунду** (лимит ТЗ — 1000 за 5 минут, запас ~270×).
-Тестов: **70** (`pytest -q`).
+Скорость: **1000 адресов за ~3.9 с** чистым разбором и ~1.9 с через HTTP-пакет
+(лимит ТЗ — 1000 за 5 минут, запас ~75×).
+Тестов: **168** (`pytest -q`).
 Справочник: **33 095 улиц по 28 городам**; район Алматы восстановлен у 5 093 улиц из 5 444.
 
 ---
@@ -74,13 +75,13 @@ python3 tests/test_parser.py      # тесты парсера (15 кейсов �
 curl -s localhost:8000/api/health                    # статус + размеры справочника
 curl -s localhost:8000/api/gazetteer/lookup?q=Аксай   # что справочник знает про «Аксай»
 python3 scripts/selfcheck.py                         # справочник + 14 контрольных адресов
-python3 scripts/eval.py                              # метрика по нашему эталону (~98.9 %)
-python3 tests/test_parser.py                         # 15 тестов на «сложные» строки
+python3 scripts/eval.py                              # метрика по нашему эталону (100.0 %)
+python3 -m pytest tests -q                           # 168 тестов, включая «сложные» строки
 
 # то же самое внутри контейнера (без локального Python):
 docker compose exec jana-address python scripts/selfcheck.py
 docker compose exec jana-address python scripts/eval.py
-docker compose exec jana-address python tests/test_parser.py
+docker compose exec jana-address python -m pytest tests -q
 ```
 
 `scripts/selfcheck.py` печатает отчёт и возвращает код 1, если что-то разошлось — годится и для
@@ -315,7 +316,7 @@ data/
   sample_input.json / sample_output.json    наш тестовый набор с эталоном
   gazetteer.sqlite                          справочник, попадает в образ
   manual/                                   ручные уточнения команды
-Dockerfile · docker-compose.yml · Makefile · deploy.ps1 · tests/
+Dockerfile · docker-compose.yml · Makefile · tests/
 ```
 
 ---
@@ -340,7 +341,7 @@ Dockerfile · docker-compose.yml · Makefile · deploy.ps1 · tests/
 
 * Стек — Python 3.11 + FastAPI, упаковка в Docker — ✅ `docker compose up`.
 * Автономность: справочник внутри образа, сеть при разборе не нужна ✅.
-* Производительность: 1000 адресов за ~1.4 с чистым разбором и ~2.8 с через HTTP-пакет (лимит ТЗ — 5 минут) ✅.
+* Производительность: 1000 адресов за ~3.9 с чистым разбором и ~1.9 с через HTTP-пакет (лимит ТЗ — 5 минут) ✅.
 * Данные хакатона не выносятся: в репозитории только открытые источники (КАТО, OSM, свой набор) ✅.
 * Нет сопоставления по `id` и возврата ответа по точному совпадению строки — используются правила
   и справочник ✅.
@@ -402,7 +403,7 @@ python scripts/analyze.py data/official/sample_input.json \
   проверка формата выгрузки.
 
 **Проверяется запуском, а не «на словах»:** `scripts/selfcheck.py` (контрольные адреса),
-`tests/test_parser.py` (19 тестов), `scripts/eval.py` (метрика по правилам ТЗ) — всё это
+`tests/` (168 тестов), `scripts/eval.py` (метрика по правилам ТЗ) — всё это
 запускается одной командой `make check` и печатает результат. Комментарии в коде объясняют не
 «что делает строка», а почему правило именно такое (например, в `app/textnorm.py` — почему слэш
 между цифрами это дробь дома, а между словами — разделитель двух языков).
@@ -411,28 +412,20 @@ python scripts/analyze.py data/official/sample_input.json \
 
 ## 10. Как выложить в свой репозиторий
 
-Обновление уже существующего репозитория одной командой:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File deploy.ps1 -RepoPath D:\testhackatonrepo
-```
-
-Скрипт распакует свежий архив, скопирует файлы (не трогая `.git` и `data/official`), поднимет
-контейнер с замером времени, прогонит самопроверку и сделает коммит с пушем.
+Первичная загрузка и обновление делаются одинаково — git из папки проекта:
 
 ```bash
-cd jana-address                     # эта папка
-git init
-git add .
+cd jana-address                     # папка с проектом
+git init -b main
+git add -A
 git commit -m "Jana Address: парсер адресов + справочник КАТО/OSM + API + интерфейс"
-git remote add origin git@github.com:b1-o/Jana-Adress.git
-git branch -M main
-git push -u origin main
+git remote add origin https://github.com/b1-o/Jana-Adress.git
+git push -u origin main --force     # --force только если заменяем старую версию
 ```
 
-Перед пушем стоит убедиться, что `data/gazetteer.sqlite` (~14 МБ) и `data/osm/*.json` коммитятся —
-без них образ не соберётся автономно. Если GitHub ругается на размер, включите Git LFS для
-`data/gazetteer.sqlite` или оставьте в репозитории только скрипты сборки, а `.sqlite` собирайте `make build-all`.
+`data/official/` (файлы организаторов) в коммит не попадает — путь уже в `.gitignore`.
+Перед пушем убедитесь, что `data/gazetteer.sqlite` (~23 МБ) коммитится: без него образ не
+соберётся автономно. Это ниже лимита GitHub в 100 МБ на файл, Git LFS не нужен.
 
 ### 9.3 Проверка по требованиям ТЗ
 
@@ -457,7 +450,7 @@ git push -u origin main
 | Интерфейс с ручной правкой | `app/static/index.html` | ✅ |
 | `docker compose up` | `Dockerfile`, `docker-compose.yml` | ✅ |
 | Автономность, сеть не нужна | справочник внутри образа | ✅ |
-| 1000 записей ≤ 5 минут | 2.8 с через API | ✅ |
+| 1000 записей ≤ 5 минут | 1.9 с через API | ✅ |
 | Нет поиска по `id` и точному совпадению строки | кэши только по словам, ответ всегда считается | ✅ |
 
 Собственный корпус проверки — `data/audit_cases.json` (73 адреса: RU/KZ/EN, слитные,
